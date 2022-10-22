@@ -4,12 +4,12 @@
 		<TargetFramework>net6.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
-		<RootNamespace>Zagidziran.Retreis</RootNamespace>
-		<AssemblyName>Zagidziran.Retreis</AssemblyName>
+		<RootNamespace>Zagidziran.Retries</RootNamespace>
+		<AssemblyName>Zagidziran.Retries</AssemblyName>
 	</PropertyGroup>
 
 	<PropertyGroup>
-		<NuspecFile>Zagidziran.Retreis.nuspec</NuspecFile>
+		<NuspecFile>Zagidziran.Retries.nuspec</NuspecFile>
 		<NuspecProperties>version=$(PackageVersion);configuration=$(Configuration)</NuspecProperties>
 	</PropertyGroup>
 

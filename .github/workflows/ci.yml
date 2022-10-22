@@ -1,0 +1,33 @@
+name: .NET
+
+on:
+  push:
+   tags:
+   - v*.*.*
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup NuGet.exe for use with actions
+      uses: NuGet/setup-nuget@v1.0.5
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 6.0.x
+    - name: Get the version
+      id: get_version
+      run: echo ::set-output name=VERSION::${GITHUB_REF#refs/tags/v}         
+    - name: Restore dependencies
+      run: dotnet restore
+    - name: Build
+      run: dotnet build --no-restore --configuration Release -p:Version=${{ steps.get_version.outputs.VERSION }}
+    - name: Test
+      run: dotnet test --no-build --verbosity normal --configuration Release 
+    - name: Pack Retries
+      run: dotnet pack --no-build --configuration Release Retries/Retries.csproj --output . -p:PackageVersion=${{ steps.get_version.outputs.VERSION }}
+    - name: PushNuget
+      run: dotnet nuget push *.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{secrets.NUGET_API_KEY}} --skip-duplicate

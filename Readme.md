@@ -1,13 +1,13 @@
 # Overture
 
-This library provides methods to help orgaanize retires. But it is not polly competitor. There is another kind of retries when we waiting for condition.
+This library provides methods to help organфize retires. But it is not polly competitor. There is another kind of retries when we waiting for condition.
 
 ### Premsises
 
-Time to time pepole write tests. Time to time test turns into complicated process with a few components involved.
-Lets say we have a database a syncroniztion logic and the functionality depending on the sync results.
-And this functionality is being tested. So our flow is to put to database, wait syncronoztion, and only then examine our system under test.
-The testing code have to wait until syncronization is performed with periodical checks. In more advanced situations becomes hard to organize such code.
+Time to time pepole write tests. Time to time test turns into complicated process with few components involved.
+Lets say we have a database, a syncroniztion logic, and the functionality depending on the sync results.
+And this functionality is being tested. So our flow is to put to the database, wait syncronoztion, and only then examine our system under test.
+The testing code have to wait until the syncronization is performed with periodical checks. In more advanced situations, becomes hard to organize such code.
 
 ### Solution
 

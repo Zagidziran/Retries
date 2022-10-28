@@ -1,4 +1,4 @@
-﻿namespace Retries
+﻿namespace Zagidziran.Retries
 {
     public interface IRetryBuilder<T>
     {

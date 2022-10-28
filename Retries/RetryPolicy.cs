@@ -1,4 +1,4 @@
-﻿namespace Retries
+﻿namespace Zagidziran.Retries
 {
     internal class RetryPolicy<T>
     {

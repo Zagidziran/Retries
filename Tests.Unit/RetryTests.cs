@@ -2,8 +2,8 @@
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
-using Retries;
 using Xunit;
+using Zagidziran.Retries;
 
 namespace Tests.Unit
 {
@@ -202,6 +202,22 @@ namespace Tests.Unit
 
             // Assert
             invokeCount.Should().Be(2);
+        }
+
+        [Fact]
+        public async Task ShouldRelyOnRandom()
+        {
+            Task<byte> AnAction(CancellationToken token)
+            {
+                return Task.FromResult((byte)new Random().Next(100));
+            }
+
+            var method = AnAction;
+
+            var result = await method
+                .Retry()
+                .Until(data => data == 7)
+                .WithTimeout(TimeSpan.FromSeconds(10));
         }
     }
 }

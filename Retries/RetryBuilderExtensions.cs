@@ -1,6 +1,6 @@
 ﻿using System.Runtime.CompilerServices;
 
-namespace Retries
+namespace Zagidziran.Retries
 {
     public static class RetryBuilderExtensions
     {

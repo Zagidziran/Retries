@@ -1,4 +1,4 @@
-﻿namespace Retries.Exceptions
+﻿namespace Zagidziran.Retries.Exceptions
 {
     public class NoMoreRetriesException : Exception
     {

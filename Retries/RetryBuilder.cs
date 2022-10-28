@@ -1,9 +1,8 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
-namespace Retries
+namespace Zagidziran.Retries
 {
-    using System.Diagnostics;
-
     internal class RetryBuilder<T> : IRetryBuilder<T>
     {
         private readonly Func<CancellationToken, Task<T>> action;

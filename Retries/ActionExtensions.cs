@@ -1,6 +1,4 @@
-﻿using System.Linq.Expressions;
-
-namespace Retries
+﻿namespace Zagidziran.Retries
 {
     public static class ActionExtensions
     {

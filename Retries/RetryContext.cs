@@ -1,8 +1,8 @@
-﻿namespace Retries
-{
-    using System.Runtime.ExceptionServices;
-    using Retries.Exceptions;
+﻿using System.Runtime.ExceptionServices;
+using Zagidziran.Retries.Exceptions;
 
+namespace Zagidziran.Retries
+{
     public record RetryContext(uint RetryNumber, TimeSpan Elapsed, TimeSpan? TimeLeft, uint? TimesLeft, Exception? Error)
     {
         internal void ThrowIfInvalid()

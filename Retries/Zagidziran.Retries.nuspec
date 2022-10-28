@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package >
   <metadata>
-    <id>Zagidziran.Retires</id>
+    <id>Zagidziran.Retries</id>
     <version>$version$</version>
     <authors>Zagidziran</authors>
     <owners>Zagidziran</owners>

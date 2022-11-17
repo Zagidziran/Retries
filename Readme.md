@@ -4,7 +4,7 @@ This library provides methods to help organфize retires. But it is not polly co
 
 ## Package
 
-![Zagidziran.Retries](https://img.shields.io/nuget/v/zagidziran.retries.svg)
+[Zagidziran.Retries](https://www.nuget.org/packages/Zagidziran.Retries)![Zagidziran.Retries](https://img.shields.io/nuget/v/zagidziran.retries.svg)
 
 ### Premisses
 

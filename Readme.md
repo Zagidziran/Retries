@@ -2,6 +2,10 @@
 
 This library provides methods to help organфize retires. But it is not polly competitor. There is another kind of retries when we waiting for condition.
 
+## Package
+
+![Zagidziran.Retries](https://img.shields.io/nuget/v/zagidziran.retries.svg)
+
 ### Premisses
 
 Time to time pepole write tests. Time to time test turns into complicated process with a few components involved.

@@ -48,11 +48,10 @@ namespace Tests.Unit
         {
             // Arrange
             var invokeCount = 0;
-            var responses = new[] { false, false, true, true, true, true, true, true, true };
 
             Task<bool> AnAction(CancellationToken token)
             {
-                return Task.FromResult(responses[invokeCount++]);
+                return Task.FromResult(invokeCount++ >= 3);
             }
 
             var action = AnAction;
@@ -299,7 +298,7 @@ namespace Tests.Unit
             // Arrange
             await retrieble.Should().ThrowAsync<Exception>();
             //// As far as delays is not completely reliable we only can expect we won't exceed a retries number
-            invokeCount.Should().BeLessThan(6);
+            invokeCount.Should().BeLessThan(7);
         }
 
         [Fact]

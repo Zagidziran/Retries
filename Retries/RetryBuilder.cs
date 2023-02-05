@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using Zagidziran.Retries.Exceptions;
 
 namespace Zagidziran.Retries
 {
@@ -13,7 +14,7 @@ namespace Zagidziran.Retries
         {
             this.action = action;
         }
-        
+
         public IRetryBuilder<T> Until(Func<T, bool> check)
         {
             this.retryPolicy.FinishCheck = check;
@@ -38,7 +39,26 @@ namespace Zagidziran.Retries
             return this;
         }
 
-        public IRetryBuilder<T> OnRetry(Func<RetryContext, CancellationToken, Task> onRetry)
+        public IRetryBuilder<T> ShouldSatisfyFor(uint times)
+        {
+            this.retryPolicy.ShouldSatisfyTimes = times;
+            return this;
+        }
+
+        public IRetryBuilder<T> ShouldSatisfyFor(TimeSpan interval)
+        {
+            this.retryPolicy.ShouldSatisfyInterval = interval;
+            return this;
+        }
+
+        public IRetryBuilder<T> ReturnEvenFailed()
+        {
+            this.retryPolicy.ReturnEvenFailed = true;
+            return this;
+        }
+
+
+        public IRetryBuilder<T> OnRetry(Func<RetryContext<T>, CancellationToken, Task> onRetry)
         {
             this.retryPolicy.OnRetry = onRetry;
             return this;
@@ -71,31 +91,40 @@ namespace Zagidziran.Retries
 
         private async Task<T> Run()
         {
-            var timer = Stopwatch.StartNew();
-            uint retryNumber = 0;
+            var context = new RetryContext<T>(this.retryPolicy);
             while (true)
             {
                 this.retryPolicy.CancellationToken.ThrowIfCancellationRequested();
-                RetryContext context = default!;
+                ContextValidationVerdict verdict;
                 try
                 {
                     var result = await this.action(this.retryPolicy.CancellationToken);
-                    if (this.retryPolicy.FinishCheck?.Invoke(result) ?? true)
-                    {
-                        return result;
-                    }
 
-                    context = this.CreateRetryContext(timer, retryNumber, null);
+                    verdict = context.SetResult(result);
                 }
                 catch (Exception ex)
                 {
-                    if (!this.retryPolicy.IsExceptionShouldBeHandled(ex))
+                    verdict = context.SetError(ex);
+                    if (verdict == ContextValidationVerdict.NeedThrow)
                     {
                         throw;
                     }
+                }
 
-                    context = this.CreateRetryContext(timer, retryNumber, ex);
+                switch (verdict)
+                {
+                    case ContextValidationVerdict.NeedRetry:
+                    case ContextValidationVerdict.NeedSatisfy:
+                        break;
 
+                    case ContextValidationVerdict.NoMoreRetries:
+                        throw new NoMoreRetriesException();
+
+                    case ContextValidationVerdict.Timeout:
+                        throw new TimeoutException();
+
+                    case ContextValidationVerdict.Passed:
+                        return context.LastAvailableResult!;
                 }
 
                 if (this.retryPolicy.OnRetry != null)
@@ -108,18 +137,7 @@ namespace Zagidziran.Retries
                     await Task.Delay(this.retryPolicy.RetryInterval.Value, this.retryPolicy.CancellationToken);
                 }
 
-                retryNumber++;
             }
-        }
-
-        private RetryContext CreateRetryContext(Stopwatch timer, uint retryNumber, Exception? ex)
-        {
-            var elapsed = timer.Elapsed;
-            var timeLeft = this.retryPolicy.Timeout - elapsed;
-            var timesLeft = this.retryPolicy.Times - retryNumber;
-            var retryContext = new RetryContext(retryNumber, timer.Elapsed, timeLeft, timesLeft, ex);
-            retryContext.ThrowIfInvalid();
-            return retryContext;
         }
 
         private static Func<Exception, bool> AdaptFilter<TEx>(Func<TEx, bool>? filter)
@@ -130,7 +148,7 @@ namespace Zagidziran.Retries
                 return _ => true;
             }
 
-            return ex => filter((TEx) ex);
+            return ex => filter((TEx)ex);
         }
     }
 }

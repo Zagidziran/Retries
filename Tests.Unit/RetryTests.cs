@@ -9,6 +9,155 @@ namespace Tests.Unit
 {
     public class RetryTests
     {
+
+        [Fact]
+        public async Task ShouldReturnEvenError()
+        {
+            // Arrange
+            var invokeCount = 0;
+
+            Task<bool> AnAction(CancellationToken token)
+            {
+                if (invokeCount++ == 1)
+                {
+                    throw new Exception();
+                }
+
+                return Task.FromResult(true);
+            }
+
+            var action = AnAction;
+
+            // Act
+            var result = await action
+                .Retry()
+                .HandleException<Exception>()
+                .Times(5)
+                .ShouldSatisfyFor(3)
+                .ReturnEvenFailed();
+
+            // Assert
+            result.Should().BeTrue();
+
+        }
+
+        [Theory]
+        [InlineData(1, 100)]
+        [InlineData(5, 0)]
+        public async Task ShouldRespectBothSatisfactionCountAndRetries(uint times, int satisfactionPeriod)
+        {
+            // Arrange
+            var invokeCount = 0;
+            var responses = new[] { false, false, true, true, true, true, true, true, true };
+
+            Task<bool> AnAction(CancellationToken token)
+            {
+                return Task.FromResult(responses[invokeCount++]);
+            }
+
+            var action = AnAction;
+            var retrieble = async () => await action
+                .Retry()
+                .Until(yeah => yeah!)
+                .WithRetryInterval(TimeSpan.FromMilliseconds(15))
+                .ShouldSatisfyFor(times)
+                .ShouldSatisfyFor(TimeSpan.FromMilliseconds(satisfactionPeriod));
+
+            // Act & Assert
+            await retrieble.Should().NotThrowAsync();
+            // At least 5 satisfy probes expected
+            invokeCount.Should().BeGreaterThan(6);
+        }
+
+
+        [Fact]
+        public async Task ShouldCountSatisfactionFailAsSingleRetry()
+        {
+            // Arrange
+            var invokeCount = 0;
+            var responses = new[] { false, false, true, true, false, true, true, true };
+
+            Task<bool> AnAction(CancellationToken token)
+            {
+                return Task.FromResult(responses[invokeCount++]);
+            }
+
+            var action = AnAction;
+            var retrieble = async () => await action
+                .Retry()
+                .Until(yeah => yeah!)
+                .WithRetryInterval(TimeSpan.FromMilliseconds(20))
+                .Times(5)
+                .ShouldSatisfyFor(3);
+
+            // Act & Assert
+            await retrieble.Should().NotThrowAsync();
+        }
+
+        [Fact]
+        public async Task ShouldCheckSatisfactionTimes()
+        {
+            // Arrange
+            var invokeCount = 0;
+
+            Task<bool> AnAction(CancellationToken token)
+            {
+                invokeCount++;
+                if (invokeCount <= 3)
+                {
+                    throw new Exception();
+                }
+
+                return Task.FromResult(true);
+            }
+
+            var action = AnAction;
+            var retrieble = action
+                .Retry()
+                .HandleException<Exception>()
+                .WithRetryInterval(TimeSpan.FromMilliseconds(20))
+                .Times(3)
+                .ShouldSatisfyFor(5);
+
+            // Act
+            await retrieble;
+
+            // Assert
+            invokeCount.Should().Be(8);
+        }
+
+        [Fact]
+        public async Task ShouldCheckSatisfactionPeriod()
+        {
+            // Arrange
+            var invokeCount = 0;
+            
+            Task<bool> AnAction(CancellationToken token)
+            {
+                invokeCount++;
+                if (invokeCount < 3)
+                {
+                    throw new Exception();
+                }
+
+                return Task.FromResult(true);
+            }
+
+            var action = AnAction;
+            var retrieble = action
+                .Retry()
+                .HandleException<Exception>()
+                .WithRetryInterval(TimeSpan.FromMilliseconds(20))
+                .Times(3)
+                .ShouldSatisfyFor(TimeSpan.FromMilliseconds(200));
+
+            // Act
+            await retrieble;
+
+            // Assert
+            invokeCount.Should().BeGreaterThan(5);
+        }
+
         [Fact]
         public async Task ShouldRetry()
         {

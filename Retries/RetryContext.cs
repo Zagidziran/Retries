@@ -1,26 +1,110 @@
-﻿using System.Runtime.ExceptionServices;
-using Zagidziran.Retries.Exceptions;
-
-namespace Zagidziran.Retries
+﻿namespace Zagidziran.Retries
 {
-    public record RetryContext(uint RetryNumber, TimeSpan Elapsed, TimeSpan? TimeLeft, uint? TimesLeft, Exception? Error)
+    public class RetryContext<T>
     {
-        internal void ThrowIfInvalid()
-        {
-            if (this.TimeLeft < TimeSpan.Zero)
-            {
-                throw new TimeoutException();
-            }
+        private readonly RetryPolicy<T> policy;
 
-            if (this.TimesLeft == 0)
+        private uint satisfidTimesInRow;
+
+        private DateTimeOffset? satisfiedFrom;
+
+        internal RetryContext(RetryPolicy<T> policy)
+        {
+            this.policy = policy;
+        }
+
+        public DateTimeOffset StartedAt { get; } = DateTimeOffset.Now;
+
+        public TimeSpan Elapsed => DateTimeOffset.Now - this.StartedAt;
+
+        public Exception? Error { get; private set; }
+
+        public T? LastAvailableResult { get; private set; }
+
+        public uint RetryNumber { get; private set; }
+
+        internal ContextValidationVerdict SetResult(T result)
+        {
+            this.LastAvailableResult = result;
+            this.Error = null;
+            this.RetryNumber++;
+
+            var checkResult = policy.FinishCheck?.Invoke(result) ?? true;
+
+            if (checkResult)
             {
-                if (this.Error != null)
+                this.satisfiedFrom ??= DateTimeOffset.Now;
+                this.satisfidTimesInRow++;
+            }
+            else
+            {
+                this.satisfiedFrom = null;
+                this.satisfidTimesInRow = 0;
+
+                if (policy.Times != null && this.RetryNumber > policy.Times)
                 {
-                    ExceptionDispatchInfo.Capture(this.Error).Throw();
+                    return policy.ReturnEvenFailed && this.LastAvailableResult != null 
+                        ? ContextValidationVerdict.FailedButOkay
+                        : ContextValidationVerdict.NoMoreRetries;
                 }
 
-                throw new NoMoreRetriesException();
+                return this.CheckForTimeout(ContextValidationVerdict.NeedRetry);
             }
+
+            if (policy.ShouldSatisfyInterval != null && DateTimeOffset.Now - this.satisfiedFrom < policy.ShouldSatisfyInterval)
+            {
+                return this.CheckForTimeout(ContextValidationVerdict.NeedSatisfy);
+            }
+
+            if (policy.ShouldSatisfyTimes != null && this.satisfidTimesInRow < policy.ShouldSatisfyTimes)
+            {
+                return this.CheckForTimeout(ContextValidationVerdict.NeedSatisfy);
+            }
+
+            return ContextValidationVerdict.Passed;
+        }
+
+        private ContextValidationVerdict CheckForTimeout(ContextValidationVerdict verdictCandidate)
+        {
+            if (policy.Timeout != null && this.Elapsed >= policy.Timeout)
+            {
+                return policy.ReturnEvenFailed && this.LastAvailableResult != null
+                    ? ContextValidationVerdict.FailedButOkay
+                    : ContextValidationVerdict.Timeout;
+            }
+
+            return verdictCandidate;
+        }
+
+        internal ContextValidationVerdict SetError(Exception ex)
+        {
+            this.Error = ex;
+            this.RetryNumber++;
+            this.satisfidTimesInRow = 0;
+            this.satisfiedFrom = null;
+
+            if (policy.ExceptionsToThrow.Any(filter => filter.IsMatched(this.Error)))
+            {
+                return ContextValidationVerdict.NeedThrow;
+            }
+
+            // And need to trow if exception is not handleable.
+            if (!policy.ExceptionsToHandle.Any(filter => filter.IsMatched(this.Error)))
+            {
+                return ContextValidationVerdict.NeedThrow;
+            }
+
+            if (policy.Timeout != null && this.Elapsed >= policy.Timeout)
+            {
+                return ContextValidationVerdict.NeedThrow;
+            }
+
+            if (policy.Times != null && this.RetryNumber > policy.Times)
+            {
+                return ContextValidationVerdict.NeedThrow;
+            }
+
+            return ContextValidationVerdict.NeedRetry;
         }
     }
 }

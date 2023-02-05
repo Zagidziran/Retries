@@ -10,7 +10,7 @@
 
         IRetryBuilder<T> Times(uint times);
 
-        IRetryBuilder<T> OnRetry(Func<RetryContext, CancellationToken, Task> onRetry);
+        IRetryBuilder<T> OnRetry(Func<RetryContext<T>, CancellationToken, Task> onRetry);
 
         IRetryBuilder<T> HandleException<TEx>(Func<TEx, bool>? filter = null) 
             where  TEx : Exception;
@@ -19,5 +19,11 @@
             where TEx : Exception;
 
         IRetryBuilder<T> WithCancellation(CancellationToken cancellationToken);
+
+        IRetryBuilder<T> ShouldSatisfyFor(uint times);
+
+        IRetryBuilder<T> ShouldSatisfyFor(TimeSpan interval);
+
+        IRetryBuilder<T> ReturnEvenFailed();
     }
 }

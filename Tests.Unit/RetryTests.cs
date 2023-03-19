@@ -33,7 +33,7 @@ namespace Tests.Unit
                 .Retry()
                 .HandleException<Exception>()
                 .Times(5)
-                .ShouldSatisfyFor(3)
+                .ShouldSatisfyTimes(3)
                 .ReturnEvenFailed();
 
             // Assert
@@ -59,8 +59,8 @@ namespace Tests.Unit
                 .Retry()
                 .Until(yeah => yeah!)
                 .WithRetryInterval(TimeSpan.FromMilliseconds(15))
-                .ShouldSatisfyFor(times)
-                .ShouldSatisfyFor(TimeSpan.FromMilliseconds(satisfactionPeriod));
+                .ShouldSatisfyTimes(times)
+                .ShouldSatisfyDuring(TimeSpan.FromMilliseconds(satisfactionPeriod));
 
             // Act & Assert
             await retrieble.Should().NotThrowAsync();
@@ -87,7 +87,7 @@ namespace Tests.Unit
                 .Until(yeah => yeah!)
                 .WithRetryInterval(TimeSpan.FromMilliseconds(20))
                 .Times(5)
-                .ShouldSatisfyFor(3);
+                .ShouldSatisfyTimes(3);
 
             // Act & Assert
             await retrieble.Should().NotThrowAsync();
@@ -116,7 +116,7 @@ namespace Tests.Unit
                 .HandleException<Exception>()
                 .WithRetryInterval(TimeSpan.FromMilliseconds(20))
                 .Times(3)
-                .ShouldSatisfyFor(5);
+                .ShouldSatisfyTimes(5);
 
             // Act
             await retrieble;
@@ -148,7 +148,7 @@ namespace Tests.Unit
                 .HandleException<Exception>()
                 .WithRetryInterval(TimeSpan.FromMilliseconds(20))
                 .Times(3)
-                .ShouldSatisfyFor(TimeSpan.FromMilliseconds(200));
+                .ShouldSatisfyDuring(TimeSpan.FromMilliseconds(200));
 
             // Act
             await retrieble;

@@ -56,6 +56,9 @@ OnRetry | Defines a delegate to be called before retry. | IRetryBuilder<T> OnRet
 HandleException | A way to specify exceptions to be retried. The parameter is delegate should return true to retry on exception and false to throw.  | IRetryBuilder<T> HandleException<TEx>(Func<TEx, bool>? filter = null) where  TEx : Exception
 Throw | This method allows to define exceptions to throw even they pass HandleException conditions. Filter should return true to throw. | IRetryBuilder<T> Throw<TEx>(Func<TEx, bool>? filter = null) where TEx : Exception
 WithCancellation | Defines a cancellation token to stop retries throw an OperationCancelledException when token is set. | IRetryBuilder<T> WithCancellation(CancellationToken cancellationToken)
-ShouldSatisfyFor | Defines a number of times the condition checks should pass. It helps to stabilize flickering.| IRetryBuilder<T> ShouldSatisfyFor(uint times)
-ShouldSatisfyFor | Defines a period the condition checks should pass. Can be combined with overload with number of times.| IRetryBuilder<T> ShouldSatisfyFor(TimeSpan interval)
+ShouldSatisfyTimes | Defines a number of times the condition checks should pass. It helps to stabilize flickering.| IRetryBuilder<T> ShouldSatisfyFor(uint times)
+ShouldSatisfyDuring | Defines a period the condition checks should pass. Can be combined with overload with number of times.| IRetryBuilder<T> ShouldSatisfyFor(TimeSpan interval)
 ReturnEvenFailed | Orders to return result from the retried action even until check or statisfy for rules are not passed. | IRetryBuilder<T> ReturnEvenFailed();
+
+Additionally, you can use an extension for action without return type. Under the hood it coversnullable object (object?) with apropriate decorations.
+In this case in this case you will always get null in the retry context ot in unitl check action if you use overload with parameter.

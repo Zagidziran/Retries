@@ -39,13 +39,13 @@ namespace Zagidziran.Retries
             return this;
         }
 
-        public IRetryBuilder<T> ShouldSatisfyFor(uint times)
+        public IRetryBuilder<T> ShouldSatisfyTimes(uint times)
         {
             this.retryPolicy.ShouldSatisfyTimes = times;
             return this;
         }
 
-        public IRetryBuilder<T> ShouldSatisfyFor(TimeSpan interval)
+        public IRetryBuilder<T> ShouldSatisfyDuring(TimeSpan interval)
         {
             this.retryPolicy.ShouldSatisfyInterval = interval;
             return this;

@@ -8,5 +8,11 @@ namespace Zagidziran.Retries
         {
             return ((RetryBuilder<T>) retryBuilder).GetAwaiter();
         }
+
+        public static IRetryBuilder<object?> Until(this IRetryBuilder<object?> retryBuilder, Func<bool> check)
+        {
+            retryBuilder.Until(_ => check());
+            return retryBuilder;
+        }
     }
 }

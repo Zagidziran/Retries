@@ -73,7 +73,7 @@
         /// </summary>
         /// <param name="times">Number of times the condition should pass in a row between result returned.</param>
         /// <returns></returns>
-        IRetryBuilder<T> ShouldSatisfyFor(uint times);
+        IRetryBuilder<T> ShouldSatisfyTimes(uint times);
 
         /// <summary>
         /// Defines a period of time when check defined in the <see cref="Until"/> should pass before result is returned.
@@ -81,7 +81,7 @@
         /// </summary>
         /// <param name="interval">The interval during which condition should pass to complete retries.</param>
         /// <returns>Self.</returns>
-        IRetryBuilder<T> ShouldSatisfyFor(TimeSpan interval);
+        IRetryBuilder<T> ShouldSatisfyDuring(TimeSpan interval);
 
         /// <summary>
         /// Orders to return the result of the last successful attempt if present even if <see cref="Until"/> or

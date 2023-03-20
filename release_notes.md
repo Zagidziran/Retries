@@ -1,7 +1,7 @@
-## 1.2.0
+### 1.2.0
 
-### Backward incompatible changes:
+#### Backward incompatible changes:
 - IRetryBuilder.ShouldSatisfyFor renamed to IRetryBuilder.ShouldSatisfyDuring and IRetryBuilder.ShouldSatisfyTimes
 
-### Other changes
-- Added extensions to retry Func<Task> and not only Func<Task<T>>
+#### Other changes
+- Added extensions to retry Func\<Task\> and not only Func\<Task\<T\>\>

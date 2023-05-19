@@ -1,4 +1,4 @@
-### 1.2.1
+### 1.2.2
 - Fixed ReturnEvenFailed was not working when no exception.
 
 ### 1.2.0

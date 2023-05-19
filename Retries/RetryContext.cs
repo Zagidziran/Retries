@@ -8,6 +8,8 @@
 
         private DateTimeOffset? satisfiedFrom;
 
+        private T? lastAvailableResult;
+
         internal RetryContext(RetryPolicy<T> policy)
         {
             this.policy = policy;
@@ -19,9 +21,19 @@
 
         public Exception? Error { get; private set; }
 
-        // We need explicitly initialize with null generic value types.
+        public T? LastAvailableResult
+        {
+            get => this.lastAvailableResult;
+            private set
+            {
+                this.lastAvailableResult = value;
+                this.HasResult = true;
+            }
+        }
+
+        // We need handle missing result as far as generic nullable value types actually not nullable when no generic constraint.
         // See https://learn.microsoft.com/en-us/dotnet/csharp/nullable-references
-        public T? LastAvailableResult { get; private set; } = (T)(object)null!;
+        public bool HasResult { get; private set; }
 
         public uint RetryNumber { get; private set; }
 
@@ -45,7 +57,7 @@
 
                 if (policy.Times != null && this.RetryNumber > policy.Times)
                 {
-                    return policy.ReturnEvenFailed && this.LastAvailableResult != null 
+                    return policy.ReturnEvenFailed && this.HasResult 
                         ? ContextValidationVerdict.FailedButOkay
                         : ContextValidationVerdict.NoMoreRetries;
                 }
@@ -104,7 +116,7 @@
         {
             if (policy.Timeout != null && this.Elapsed >= policy.Timeout)
             {
-                return policy.ReturnEvenFailed && this.LastAvailableResult != null
+                return policy.ReturnEvenFailed && this.HasResult
                     ? ContextValidationVerdict.FailedButOkay
                     : ContextValidationVerdict.Timeout;
             }
@@ -114,7 +126,7 @@
 
         private ContextValidationVerdict CheckForReturnIfFailed(ContextValidationVerdict verdictCandidate)
         {
-            return policy.ReturnEvenFailed && this.LastAvailableResult != null
+            return policy.ReturnEvenFailed && this.HasResult
                 ? ContextValidationVerdict.FailedButOkay
                 : verdictCandidate;
         }

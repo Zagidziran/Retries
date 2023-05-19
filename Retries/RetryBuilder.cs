@@ -1,9 +1,8 @@
-﻿using System.Diagnostics;
-using System.Runtime.CompilerServices;
-using Zagidziran.Retries.Exceptions;
-
-namespace Zagidziran.Retries
+﻿namespace Zagidziran.Retries
 {
+    using System.Runtime.CompilerServices;
+    using Zagidziran.Retries.Exceptions;
+
     internal class RetryBuilder<T> : IRetryBuilder<T>
     {
         private readonly Func<CancellationToken, Task<T>> action;
@@ -122,6 +121,9 @@ namespace Zagidziran.Retries
 
                     case ContextValidationVerdict.Timeout:
                         throw new TimeoutException();
+
+                    case ContextValidationVerdict.FailedButOkay:
+                        return context.LastAvailableResult!;
 
                     case ContextValidationVerdict.Passed:
                         return context.LastAvailableResult!;

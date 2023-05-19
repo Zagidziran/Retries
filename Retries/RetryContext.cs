@@ -19,7 +19,9 @@
 
         public Exception? Error { get; private set; }
 
-        public T? LastAvailableResult { get; private set; }
+        // We need explicitly initialize with null generic value types.
+        // See https://learn.microsoft.com/en-us/dotnet/csharp/nullable-references
+        public T? LastAvailableResult { get; private set; } = (T)(object)null!;
 
         public uint RetryNumber { get; private set; }
 
@@ -64,6 +66,40 @@
             return ContextValidationVerdict.Passed;
         }
 
+        internal ContextValidationVerdict SetError(Exception ex)
+        {
+            this.Error = ex;
+            this.RetryNumber++;
+            this.satisfidTimesInRow = 0;
+            this.satisfiedFrom = null;
+
+            var throwVerdict = CheckForReturnIfFailed(ContextValidationVerdict.NeedThrow);
+            var retryVerdict = ContextValidationVerdict.NeedRetry;
+
+            if (policy.ExceptionsToThrow.Any(filter => filter.IsMatched(this.Error)))
+            {
+                return throwVerdict;
+            }
+
+            // And need to trow if exception is not handleable.
+            if (!policy.ExceptionsToHandle.Any(filter => filter.IsMatched(this.Error)))
+            {
+                return throwVerdict;
+            }
+
+            if (policy.Timeout != null && this.Elapsed >= policy.Timeout)
+            {
+                return throwVerdict;
+            }
+
+            if (policy.Times != null && this.RetryNumber > policy.Times)
+            {
+                return throwVerdict;
+            }
+
+            return retryVerdict;
+        }
+
         private ContextValidationVerdict CheckForTimeout(ContextValidationVerdict verdictCandidate)
         {
             if (policy.Timeout != null && this.Elapsed >= policy.Timeout)
@@ -76,35 +112,11 @@
             return verdictCandidate;
         }
 
-        internal ContextValidationVerdict SetError(Exception ex)
+        private ContextValidationVerdict CheckForReturnIfFailed(ContextValidationVerdict verdictCandidate)
         {
-            this.Error = ex;
-            this.RetryNumber++;
-            this.satisfidTimesInRow = 0;
-            this.satisfiedFrom = null;
-
-            if (policy.ExceptionsToThrow.Any(filter => filter.IsMatched(this.Error)))
-            {
-                return ContextValidationVerdict.NeedThrow;
-            }
-
-            // And need to trow if exception is not handleable.
-            if (!policy.ExceptionsToHandle.Any(filter => filter.IsMatched(this.Error)))
-            {
-                return ContextValidationVerdict.NeedThrow;
-            }
-
-            if (policy.Timeout != null && this.Elapsed >= policy.Timeout)
-            {
-                return ContextValidationVerdict.NeedThrow;
-            }
-
-            if (policy.Times != null && this.RetryNumber > policy.Times)
-            {
-                return ContextValidationVerdict.NeedThrow;
-            }
-
-            return ContextValidationVerdict.NeedRetry;
+            return policy.ReturnEvenFailed && this.LastAvailableResult != null
+                ? ContextValidationVerdict.FailedButOkay
+                : verdictCandidate;
         }
     }
 }

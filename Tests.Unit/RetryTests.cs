@@ -11,7 +11,87 @@ namespace Tests.Unit
     {
 
         [Fact]
-        public async Task ShouldReturnEvenError()
+        public async Task ShouldReturnLastResultIfOnceOnReturnEvenFailed()
+        {
+            // Arrange
+            var invokeCount = 0;
+
+            Task<bool> AnAction(CancellationToken token)
+            {
+                if (invokeCount++ == 1)
+                {
+                    return Task.FromResult(false);
+                }
+
+                throw new Exception();
+            }
+
+            var failingAction = AnAction;
+
+            // Act
+            var result = await failingAction
+                .Retry()
+                .Times(3)
+                .Until(res => res)
+                .ShouldSatisfyTimes(2)
+                .HandleException<Exception>()
+                .ReturnEvenFailed();
+
+            // Assert
+            result.Should().BeFalse();
+        }
+
+        [Fact]
+        public async Task ShouldThrowOnReturnEvenFailedIfNoResult()
+        {
+            // Arrange
+            Task<bool> AnAction(CancellationToken token)
+            {
+                throw new Exception();
+            }
+
+            var failingAction = AnAction;
+
+            // Act
+            var action = async () => await failingAction
+                .Retry()
+                .Times(1)
+                .Until(res => res)
+                .HandleException<Exception>()
+                .ReturnEvenFailed();
+
+            // Assert
+            await action.Should().ThrowAsync<Exception>();
+        }
+
+        [Fact]
+        public async Task ShouldRespectTimesOnReturnEvenFailed()
+        {
+            // Arrange
+            var invokeCount = 0;
+
+            Task<bool> AnAction(CancellationToken token)
+            {
+                return Task.FromResult(false);
+            }
+
+            var action = AnAction;
+
+            // Act
+            var result = await action
+                .Retry()
+                .HandleException<Exception>()
+                .Times(2)
+                .Until(res => res)
+                .ShouldSatisfyTimes(3)
+                .ReturnEvenFailed();
+
+            // Assert
+            result.Should().BeFalse();
+        }
+
+        [Fact]
+        public async Task ShouldReturnEvenFailed()
         {
             // Arrange
             var invokeCount = 0;
@@ -38,7 +118,6 @@ namespace Tests.Unit
 
             // Assert
             result.Should().BeTrue();
-
         }
 
         [Theory]
@@ -130,7 +209,7 @@ namespace Tests.Unit
         {
             // Arrange
             var invokeCount = 0;
-            
+
             Task<bool> AnAction(CancellationToken token)
             {
                 invokeCount++;
@@ -312,7 +391,7 @@ namespace Tests.Unit
             }
 
             var action = AnAction;
-            
+
             // Act
             await action
                 .Retry()
